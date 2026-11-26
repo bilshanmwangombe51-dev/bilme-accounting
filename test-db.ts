@@ -1,0 +1,18 @@
+import { BilmeDB } from "./packages/local-db/src/index.js";
+import { createEntry, trialBalance, type Account } from "./packages/core/src/index.js";
+import { existsSync } from "fs";
+console.log("?? Starting offline database test...");
+const db = new BilmeDB("bilme-offline.db");
+console.log("? Database file created/opened: bilme-offline.db");
+const accounts: Account[] = [ { id: "a1", code: "1000", name: "Cash", type: "asset" }, { id: "a2", code: "3000", name: "Owner Equity", type: "equity" } ];
+accounts.forEach(a => db.saveAccount(a));
+console.log("? Accounts saved to database.");
+const entry = createEntry({ id: "e1", date: "2026-11-22", memo: "Owner invests $500 cash", lines: [ { accountId: "a1", debit: 50000, credit: 0 }, { accountId: "a2", debit: 0, credit: 50000 } ] });
+db.saveEntry(entry);
+console.log("? Journal entry saved to database.");
+const savedEntries = db.getEntries();
+const tb = trialBalance(savedEntries, db.getAccounts());
+console.log("\n?? Trial Balance:");
+console.table(tb.rows);
+console.log(`Is it balanced? ${tb.balanced ? "YES ?" : "NO ?"}`);
+if (existsSync("bilme-offline.db")) console.log("\n?? SUCCESS! You can see the physical database file 'bilme-offline.db' in your folder!");
